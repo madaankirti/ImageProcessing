@@ -1,0 +1,73 @@
+import numpy as np
+import cv2
+def find_first_last_non_white(image, tolerance=8):
+    h, w = image.shape
+    fwhite = next((x for x in range(w) if image[h - 1, x] < 255 - tolerance), None)
+
+    lwhite = next((x for x in range(w - 1, -1, -1) if image[h - 1, x] < 255 - tolerance), None)
+
+    return fwhite, lwhite
+def process_img(image):
+   grayimg = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+   binary_masking = 255 * (grayimg < 128).astype(np.uint8)
+   coords = cv2.findNonZero(binary_masking)
+   return coords
+def calculate_midpoint(first_pixel, last_pixel):
+    return (first_pixel + last_pixel) // 2   
+def solve(image_width,image):
+    y1 = image_width // 12
+    y2 = image_width // 3
+    selected_region = image[y1 : y2, :]  
+    return selected_region  
+def findans(featurecheck,cntcheck):
+    if(featurecheck==1 and cntcheck==1):
+     return 'real'
+    else:
+      return 'fake' 
+def solution(audio_path):
+ img1 = cv2.imread(audio_path)
+
+ cor = process_img(img1)
+ x, y, w, h = cv2.boundingRect(cor)
+ img1 = img1[y : y + h, x : x + w]
+
+ 
+
+ image = img1
+ image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+ f_pixel, l_pixel = find_first_last_non_white(image)
+ mid = calculate_midpoint(f_pixel,l_pixel)
+ h, w = image.shape
+ cch = 0
+ if mid / (w - mid) > 0.85 and mid / (w - mid) < 0.9:
+    cch = 1
+ else:
+    cch = 0
+
+
+ region = solve(image.shape[1],image)
+
+ _, threshold = cv2.threshold(region, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+
+ num_parts = 25
+ height, width = threshold.shape
+ pwidth = width // num_parts
+ fch = 1
+
+ for i in range(num_parts):
+    starting = i * pwidth
+    ending = (i + 1) * pwidth
+    part = threshold[:, starting : ending]
+    bpcount = np.sum(part == 0)
+    if bpcount == 0:
+        fch = 0
+        break
+
+ for i in range(num_parts):
+    starting = i * pwidth
+    ending = (i + 1) * pwidth
+    part = threshold[:, starting:ending]
+
+ ans=findans(fch,cch)
+    
+ return ans
