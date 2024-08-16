@@ -1,0 +1,25 @@
+import numpy as np
+import librosa
+import librosa.display
+import cv2
+def get_quality(spectrogram):
+    threshold = 128
+    high_region = spectrogram > threshold
+    low_region = spectrogram <= threshold
+    freq_ratio = np.std(high_region)
+    if freq_ratio > 0.335:
+        return "metal"
+    else:
+        return "cardboard"
+
+def convert_to_spectrogram(audio_path):
+    y, sr = librosa.load(audio_path)
+    spectrogram = np.abs(librosa.stft(y))
+    spectrogram_db = librosa.amplitude_to_db(spectrogram, ref=np.max)
+    spectrogram_db = cv2.normalize(spectrogram_db, None, 0, 255, cv2.NORM_MINMAX)
+    return spectrogram_db
+
+def solution(audio_path):
+   spectrogram = convert_to_spectrogram(audio_path)
+   quality = get_quality(spectrogram)
+   return quality
